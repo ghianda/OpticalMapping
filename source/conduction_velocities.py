@@ -196,46 +196,52 @@ def prepare_excel_wb(folderpath, exp_filename, burst, param, out_name=None):
     # add_sheet is used to create sheet.
     sheet = wb.add_sheet('Sheet_1')
 
-    # write filename and filepath
-    out_name = 'results.xls'
+    # create filename and filepath
+    out_name = ('_').join(exp_filename.split('_')[0:5] + ['results.xls']) if out_name is None else out_name
     out_path = os.path.join(folderpath, out_name)
+
 
     # write titles
     sheet.write_merge(0, 0, 0, 10, "TXT FILENAME  : {}".format(exp_filename))
     sheet.write_merge(1, 1, 0, 10, "EXP PATH          : {}".format(folderpath))
 
-    # write "mean" and "std" cell at side
+    # write "mean" and "std" cells at side of the sheet
     sides = ['python mean', 'python sem', 'excel mean', 'excel sem']
     for (i, s) in enumerate(sides):
         sheet.write(17 + i, 0, s)
 
-    # create a block of cells for each burst of stimuli
+    # define names of columns
+    fields = ['AP num', 'CV py', 'CV lab', 'CV map', 'TTP', '50%', '90%', 'APA']
+    n_col = len(fields)
+
+    # prepare a block of cells for each burst of stimuli
+    # each block is separated by 1 empty column (-> block_index * (columns + 1))
+    # and start from column B (-> block_index * (columns + 1) + 1)
     for (ib, b) in enumerate(burst):
 
         # write block title and start/stop in ms
-        sheet.write_merge(3, 3, (ib * 8) + 1, (ib * 8) + 7,
+        sheet.write_merge(3, 3, (ib * (n_col + 1)) + 1, ((ib + 1) * (n_col + 1) - 1),
                           "eStim {}Hz:".format(b[bKeys.freq_stim]),
                           xlwt.easyxf("align: horiz center; pattern: pattern solid, fore_colour gray25"))
 
-        sheet.write_merge(4, 4, (ib * 8) + 1, (ib * 8) + 7,
+        sheet.write_merge(4, 4, (ib * (n_col + 1)) + 1, ((ib + 1) * (n_col + 1) - 1),
                           "from {}ms to {}ms".format(b[bKeys.start_ms], b[bKeys.stop_ms]),
                           xlwt.easyxf("align: horiz center"))
 
         # write measure units
-        sheet.write(5, (ib * 8) + 1, " - ", xlwt.easyxf("align: horiz center"))
-        sheet.write_merge(5, 5, (ib * 8) + 2, (ib * 8) + 3, "(m/s)", xlwt.easyxf("align: horiz center"))
-        sheet.write_merge(5, 5, (ib * 8) + 4, (ib * 8) + 6, "(ms)", xlwt.easyxf("align: horiz center"))
-        sheet.write(5, (ib * 8) + 7, "%", xlwt.easyxf("align: horiz center"))
+        sheet.write(5, (ib * (n_col + 1)) + 1, " - ", xlwt.easyxf("align: horiz center"))
+        sheet.write_merge(5, 5, (ib * (n_col + 1)) + 2, (ib * (n_col + 1)) + 4, "(m/s)", xlwt.easyxf("align: horiz center"))
+        sheet.write_merge(5, 5, (ib * (n_col + 1)) + 5, (ib * (n_col + 1)) + 7, "(ms)", xlwt.easyxf("align: horiz center"))
+        sheet.write(5, (ib * (n_col + 1)) + 8, "%", xlwt.easyxf("align: horiz center"))
 
         # write fields names
-        fields = ['AP num', 'CV', 'CV map', 'TTP', '50%', '90%', 'APA']
-        for (i, fname) in enumerate(fields):
-            sheet.write(6, (ib * 8) + i + 1, fname, xlwt.easyxf("align: horiz center"))
+        for (i_field, fname) in enumerate(fields):
+            sheet.write(6, (ib * (n_col + 1)) + i_field + 1, fname, xlwt.easyxf("align: horiz center"))
 
     # save excel file
     wb.save(out_path)
 
-    return wb, sheet, out_path
+    return wb, sheet, out_path, n_col
 
 
 def main(parser):
@@ -254,7 +260,7 @@ def main(parser):
     # extract experiment parameters from filename and print info to console
     burst, param = extract_info(filename, _print=True)
 
-    wb, sheet, out_path = prepare_excel_wb(folderpath, filename, burst, param)
+    wb, sheet, out_path, n_col_sheet_block = prepare_excel_wb(folderpath, filename, burst, param)
 
     # read OM tracks values
     values = np.loadtxt(txt_path, dtype=np.float, usecols=(0, 1, 2))
@@ -365,16 +371,16 @@ def main(parser):
             cv_list.append(cv)
 
             # write spike_num and cv
-            sheet.write(i_spike + 7, (i_burst * 8) + 1, "{}".format(int(spike_num)))
-            sheet.write(i_spike + 7, (i_burst * 8) + 2, "{0:0.2f}".format(cv))
+            sheet.write(i_spike + 7, (i_burst * (n_col_sheet_block + 1)) + 1, "{}".format(int(spike_num)))
+            sheet.write(i_spike + 7, (i_burst * (n_col_sheet_block + 1)) + 2, "{0:0.2f}".format(cv))
 
         # estimate mean and std. error
         avg = np.mean(np.asarray(cv_list))
         sem = stats.sem(np.asarray(cv_list))
 
         # write mean and std. error into excel file
-        sheet.write(17, (i_burst * 8) + 2, "{0:0.2f}".format(avg))
-        sheet.write(18, (i_burst * 8) + 2, "{0:0.2f}".format(sem))
+        sheet.write(17, (i_burst * (n_col_sheet_block + 1)) + 2, "{0:0.2f}".format(avg))
+        sheet.write(18, (i_burst * (n_col_sheet_block + 1)) + 2, "{0:0.2f}".format(sem))
 
         # print results and average
         print("*** RESULTS:")
