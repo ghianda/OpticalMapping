@@ -9,7 +9,6 @@ import argparse
 
 # data manipulation
 import numpy as np
-import matplotlib.pyplot as plt
 import scipy.signal as sign
 import scipy.stats as stats
 from scipy import interpolate
@@ -18,9 +17,12 @@ from scipy import interpolate
 import xlwt
 from xlwt import Workbook
 
-
+# plot
+import matplotlib
+import matplotlib.pyplot as plt
 
 # plot settings
+matplotlib.use('Qt5Agg')
 plt.rcParams["figure.figsize"] = (15, 5)
 
 
@@ -125,15 +127,23 @@ def plot_signals_with_peaks(signals, peaks_pos, labels, title, _enum_peaks=False
     # signals - list of signals to be plotted
     # peaks_pos - list of array of peaks positions to be highlighted
     # example: signals = [apex, base] and peaks_pos = [peaks_apex, peaks_base]
+    #
+    # NB - plt.ion() and  plt.pause(0.01) before and after plt.show()
+    # allow to enable the "interactive-mode" for matplotlib:
+    # when firts plot is showed, execution in the shell do not stop and
+    # user can insert values in the command line and go ahead
+    # and the execution continues.
 
-    if type(signals) is not list: signals = [signals]
-    if type(peaks_pos) is not list: peaks_pos = [peaks_pos]
-    if type(labels) is not list: labels = [labels]
+    # convert input parameters to list if they aren't already lists
+    signals = [signals] if type(signals) is not list else signals
+    peaks_pos = [peaks_pos] if type(peaks_pos) is not list else peaks_pos
+    labels = [labels] if type(labels) is not list else labels
 
     min_y = 0  # used to enlarge y axis at the bottom
 
     if len(signals) == len(peaks_pos):
         fig, ax = plt.subplots()
+        plt.ion()  #added for enable "non-block" mode
 
         # plot signals and peaks
         for (s, pos, lab) in zip(signals, peaks_pos, labels):
@@ -146,7 +156,7 @@ def plot_signals_with_peaks(signals, peaks_pos, labels, title, _enum_peaks=False
                     plt.text(p - 30, s[p] + s[p] / 10, str(i))
 
         if _plot_intervals and frame_rate is not None:
-            # plot period durations
+            # plot period 5durations
 
             # if not already selected with 'intervals_of_signal_n',
             # search signal with lowest minimum value
@@ -184,6 +194,7 @@ def plot_signals_with_peaks(signals, peaks_pos, labels, title, _enum_peaks=False
         ax.set_ylim(min_y + min_y / 3, None)
         plt.legend()
         plt.show()
+        plt.pause(0.01)  # added for enable "non-block" mode
 
     else:
         print('ERROR - different number of signals and peaks passed to plot')
@@ -199,7 +210,6 @@ def prepare_excel_wb(folderpath, exp_filename, burst, param, out_name=None):
     # create filename and filepath
     out_name = ('_').join(exp_filename.split('_')[0:5] + ['results.xls']) if out_name is None else out_name
     out_path = os.path.join(folderpath, out_name)
-
 
     # write titles
     sheet.write_merge(0, 0, 0, 10, "TXT FILENAME  : {}".format(exp_filename))
@@ -260,6 +270,7 @@ def main(parser):
     # extract experiment parameters from filename and print info to console
     burst, param = extract_info(filename, _print=True)
 
+    # create excel file
     wb, sheet, out_path, n_col_sheet_block = prepare_excel_wb(folderpath, filename, burst, param)
 
     # read OM tracks values
