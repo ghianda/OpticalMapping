@@ -256,7 +256,10 @@ def prepare_excel_wb(folderpath, exp_filename, burst, param, out_name=None):
 
 def main(parser):
 
-    print(bcolors.HEADER + "*** Conduction Velocity Analyzer ***" + bcolors.ENDC)
+    # print(bcolors.HEADER + "*** Conduction Velocity Analyzer ***" + bcolors.ENDC) # on windows cmd colors don't work
+    print('\n***************************************')
+    print('*** Conduction Velocity Analyzer ******')
+    print('\n***************************************')
 
     # parse arguments
     args = parser.parse_args()
@@ -284,9 +287,7 @@ def main(parser):
     ''' ===== [ START ANALISIS ] ===== - for each burst '''
     for (i_burst, b) in enumerate(burst):
 
-        print(bcolors.HEADER +
-              "\n*** Analyzing Burst at {}Hz".format(b[bKeys.freq_stim]) +
-              bcolors.ENDC)
+        print('\n\n********* Analyzing Burst at {}Hz *********'.format(b[bKeys.freq_stim]))
 
         # extract ramp
         ms = full_ms[b[bKeys.start_ms]:b[bKeys.stop_ms]]
@@ -404,7 +405,9 @@ def main(parser):
 
     # save excel file
     wb.save(out_path)
-    print(bcolors.HEADER + " --- Conduction Velocity Analyzer: Process finished. ---" + bcolors.ENDC)
+    print('\nOutput saved in:')
+    print(out_path)
+    print(' --------- Conduction Velocity Analyzer: Process finished. ---------\n')
 
 
 if __name__ == '__main__':
