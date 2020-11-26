@@ -216,7 +216,8 @@ def prepare_excel_wb(folderpath, exp_filename, burst, param, out_name=None):
     sheet.write_merge(1, 1, 0, 10, "EXP PATH          : {}".format(folderpath))
 
     # write "mean" and "std" cells at side of the sheet
-    sides = ['python mean', 'python sem', 'excel mean', 'excel sem']
+    # sides = ['mean', 'python sem', 'excel mean', 'excel sem']
+    sides = ['mean', 'sem']
     for (i, s) in enumerate(sides):
         sheet.write(17 + i, 0, s)
 
@@ -391,17 +392,17 @@ def main(parser):
         sem = stats.sem(np.asarray(cv_list))
 
         # write mean and std. error into excel file
-        sheet.write(17, (i_burst * (n_col_sheet_block + 1)) + 2, "{0:0.2f}".format(avg))
-        sheet.write(18, (i_burst * (n_col_sheet_block + 1)) + 2, "{0:0.2f}".format(sem))
+        sheet.write(17, (i_burst * (n_col_sheet_block + 1)) + 2, "{0:0.3f}".format(avg))
+        sheet.write(18, (i_burst * (n_col_sheet_block + 1)) + 2, "{0:0.3f}".format(sem))
 
         # print results and average
         print("*** RESULTS:")
         print("- Conduction velocities in m/s:")
         for cv in cv_list:
-            print("-- {0:0.2f} m/s".format(cv))
+            print("-- {0:0.3f} m/s".format(cv))
 
         print("\n- Average Conduction velocity: ", end='')
-        print("-- {0:0.2f} +- {1:0.2f} m/s".format(avg, sem))
+        print("-- {0:0.3f} +- {1:0.3f} m/s".format(avg, sem))
 
     # save excel file
     wb.save(out_path)
