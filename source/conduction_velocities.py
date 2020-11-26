@@ -389,7 +389,7 @@ def main(parser):
 
             # write spike_num and cv
             sheet.write(i_spike + 7, (i_burst * (n_col_sheet_block + 1)) + 1, "{}".format(int(spike_num)))
-            sheet.write(i_spike + 7, (i_burst * (n_col_sheet_block + 1)) + 2, "{0:0.2f}".format(cv))
+            sheet.write(i_spike + 7, (i_burst * (n_col_sheet_block + 1)) + 2, "{0:0.3f}".format(cv))
 
         # estimate mean and std. error
         avg = np.mean(np.asarray(cv_list))
