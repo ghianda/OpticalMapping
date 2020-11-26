@@ -123,7 +123,7 @@ def extract_info(filename, _print=False):
 
 
 def plot_signals_with_peaks(signals, peaks_pos, labels, title, _enum_peaks=False, _plot_intervals=False,
-                            frame_rate=None, intervals_of_signal_n=None):
+                            frame_rate=None, reference_signal_id=None):
     # signals - list of signals to be plotted
     # peaks_pos - list of array of peaks positions to be highlighted
     # example: signals = [apex, base] and peaks_pos = [peaks_apex, peaks_base]
@@ -153,41 +153,45 @@ def plot_signals_with_peaks(signals, peaks_pos, labels, title, _enum_peaks=False
 
             if _enum_peaks is True:
                 for (i, p) in enumerate(pos):
-                    plt.text(p - 30, s[p] + s[p] / 10, str(i))
+                    plt.text(p - 60, s[p] + (s[p] / 10), str(i))
 
         if _plot_intervals and frame_rate is not None:
-            # plot period 5durations
+            # plot period bars and durations
 
-            # if not already selected with 'intervals_of_signal_n',
-            # search signal with lowest minimum value
-            # to use as position reference to plot lines and texts
-            if intervals_of_signal_n is None:
+            # if not already selected by user with 'intervals_of_signal_n',
+            # find signal with lowest value
+            # to use as position reference to plot bars and texts
+            if reference_signal_id is None:
                 if len(signals) > 1:
-                    intervals_of_signal_n = np.argmin(
+                    reference_signal_id = np.argmin(
                         np.array([np.min(s) for s in signals]))
                 else:
-                    intervals_of_signal_n = 0
-            sign = signals[intervals_of_signal_n]  # select only first signal to show periods
-            p_pos = peaks_pos[intervals_of_signal_n]  # select peaks of only first signal to show periods
-            ap_durations = np.diff(p_pos) / frame_rate
+                    reference_signal_id = 0
+            sign = signals[reference_signal_id]  # select only selected signal to show periods
+            p_pos = peaks_pos[reference_signal_id]  # select peaks of only selected signal to show periods
+            ap_durations = np.diff(p_pos) / frame_rate  # estimate average ap duration from peaks timing
 
-            # plot AP durations as lines and texts
+            # plot AP durations as bars and texts
             for (i, ap) in enumerate(ap_durations):
-                # line position
-                y_info_pos = sign[p_pos[i]] + (2 / 3) * sign[p_pos[i]]
-                x_info_min = p_pos[i] + p_pos[i] / 100
-                x_info_max = p_pos[i + 1] - p_pos[i - 1] / 100
+                # bar coordinates: start(x,y)-----stop(x,y)
+                y_bar = sign[p_pos[i]] - 0.03
+                # old
+                # x_info_min = p_pos[i] + p_pos[i] / 100
+                # x_info_max = p_pos[i + 1] - p_pos[i - 1] / 100
+                # new:
+                x_bar_min = p_pos[i]
+                x_bar_max = p_pos[i + 1]
 
                 # plot segent
-                plt.hlines(y=y_info_pos, xmin=x_info_min, xmax=x_info_max)
+                plt.hlines(y=y_bar, xmin=x_bar_min, xmax=x_bar_max, colors='black')
 
                 # print duration below the line
-                plt.text(x=x_info_min,
-                         y=y_info_pos + y_info_pos / 10,
+                plt.text(x=x_bar_min + 25,
+                         y=y_bar + y_bar / 10,
                          s="{0} ms".format(int(ap)))
 
                 # update min_y to enlarge plot
-                min_y = y_info_pos if y_info_pos < min_y else min_y
+                min_y = y_bar if y_bar < min_y else min_y
 
         plt.title(title)
         plt.xlabel('ms'), plt.ylabel('Intensity')
